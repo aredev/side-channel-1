@@ -1,2 +1,2 @@
 
-Copyright (C) 2017 Abdullah Rasool
+Copyright (C) 2017 Team RASMAN
