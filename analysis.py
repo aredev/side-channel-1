@@ -3,6 +3,8 @@ import numpy
 from scipy.stats.stats import pearsonr
 import matplotlib.pyplot as plt
 
+__author__ = "Tom Sandmann & Abdullah Rasool"
+
 sbox = dict([
     (hex(0), hex(12)),
     (hex(1), hex(5)),
@@ -38,7 +40,7 @@ def read_traces_file():
     return file['traces']
 
 
-# Generates all 2^4 possibilities for k
+# Generates all 2^4 possibilities for k, from 1 to 16
 def create_all_keys():
     keys = []
     for i in range(0, 16):
@@ -49,11 +51,13 @@ def create_all_keys():
 # Use the values of in, the key and the sbox to craft y
 def create_value_prediction_matrix(in_values, keys):
     matrix = numpy.zeros((rows, columns))
-    for k in keys:
-        for i in in_values:
+    row = 0
+    for i in in_values:
+        for k in keys:
             i_xor_k = hex(i[0] ^ k)
             y = sbox[i_xor_k]
-            matrix[k][i] = int(y, 16)       # Access matrix by column row
+            matrix[row][k] = int(y, 16)       # Access matrix by column row
+        row += 1
 
     return matrix
 
@@ -70,19 +74,25 @@ def create_power_prediction_matrix(value_prediction_matrix):
     return matrix
 
 
+# Compute the pearson correlation coefficient for every column in the power prediction matrix
+# with every column of the traces matrix
 def create_column_wise_correlation(traces, power_predication_matrix):
     candidates = []
 
-    for x in range(columns):
-        correlation = abs(pearsonr(traces[:, x], power_predication_matrix[:, x])[0])    # The first number is the correlation, the second number is the p-value
-        candidates.append(correlation)
+    for power_predication in range(columns):
+        correlations = []
+        for trace in range(columns):
+            correlation = abs(pearsonr(traces[:, trace], power_predication_matrix[:, power_predication])[0])    # The first number is the correlation, the second number is the p-value
+            correlations.append(correlation)
+        candidates.append((power_predication, correlations, max(correlations)))
 
-    candidates = sorted(candidates, reverse=True)
+    candidates = sorted(candidates, key=lambda tup: tup[2], reverse=True)
     print(candidates)
 
     return candidates
 
 
+# Create a plot of the correlations
 def create_candidate_plot(traces, power_predication_matrix):
     plot = []
 
@@ -90,7 +100,7 @@ def create_candidate_plot(traces, power_predication_matrix):
         time_samples = []
         coefficients = []
         for time_sample in range(6990):
-            corcoef = abs(pearsonr(traces[:, time_sample], power_predication_matrix[:, candidate])[0])
+            corcoef = abs(pearsonr(power_predication_matrix[:, candidate], traces[:, time_sample])[0])
             time_samples.append(time_sample)
             coefficients.append(corcoef)
 
@@ -104,7 +114,8 @@ def create_candidate_plot(traces, power_predication_matrix):
     # Get the candidate with the highest correlation coefficient
     sorted_candidates = sorted(plot, key=lambda tup: tup[3], reverse=True)
     highest_correlated_candidate = sorted_candidates[0][2]
-    print('Candidate with highest correlation : ' + str(sorted_candidates[0][2]))
+    print('Candidate with highest correlation : ' + str(sorted_candidates[0][2]) + ' with correlation value ' +
+          str(sorted_candidates[0][3]))
 
     for p in plot:
         if p[2] != highest_correlated_candidate:
@@ -147,6 +158,18 @@ def create_stepped_power_traces_graph(traces, power_prediction_matrix, highest_c
     plt.xlabel('Nr of traces')
     plt.ylabel('Ranking of candidate')
     plt.show()
+
+
+def write_matrix_to_textfile(a_matrix, file_to_write):
+
+    def compile_row_string(a_row):
+        return str(a_row).strip(']').strip('[').replace(' ','')
+
+    with open(file_to_write, 'w') as f:
+        for row in a_matrix:
+            f.write(compile_row_string(row)+'\n')
+
+    return True
 
 
 in_values = read_inputs_file()
