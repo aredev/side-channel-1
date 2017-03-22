@@ -81,13 +81,17 @@ def create_column_wise_correlation(traces, power_predication_matrix):
 
     for power_predication in range(columns):
         correlations = []
-        for trace in range(columns):
+        for trace in range(6990):
             correlation = abs(pearsonr(traces[:, trace], power_predication_matrix[:, power_predication])[0])    # The first number is the correlation, the second number is the p-value
             correlations.append(correlation)
         candidates.append((power_predication, correlations, max(correlations)))
 
     candidates = sorted(candidates, key=lambda tup: tup[2], reverse=True)
-    print(candidates)
+
+    print("Sorted candidates: ")
+    print("Candidate:\t\tCorrelation Value:")
+    for c in candidates:
+        print(str(c[0]), str(c[2]), sep="\t\t\t")
 
     return candidates
 
