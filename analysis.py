@@ -159,19 +159,6 @@ def create_stepped_power_traces_graph(traces, power_prediction_matrix, highest_c
     plt.ylabel('Ranking of candidate')
     plt.show()
 
-
-def write_matrix_to_textfile(a_matrix, file_to_write):
-
-    def compile_row_string(a_row):
-        return str(a_row).strip(']').strip('[').replace(' ','')
-
-    with open(file_to_write, 'w') as f:
-        for row in a_matrix:
-            f.write(compile_row_string(row)+'\n')
-
-    return True
-
-
 in_values = read_inputs_file()
 keys = create_all_keys()
 vpm = create_value_prediction_matrix(in_values, keys)
@@ -181,5 +168,3 @@ traces = read_traces_file()
 candidates = create_column_wise_correlation(traces, ppm)
 hcc = create_candidate_plot(traces, ppm)
 create_stepped_power_traces_graph(traces, ppm, hcc)
-
-
