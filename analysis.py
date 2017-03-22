@@ -106,10 +106,10 @@ def create_candidate_plot(traces, power_predication_matrix):
 
         plot.append((time_samples, coefficients, candidate, max(coefficients)))
 
-    print(plot[0]) # First candidate
-    print(plot[0][0]) # time data of first candidate
-    print(plot[0][1]) # coefficient data of first candidate
-    print(plot[0][2]) # 'name' of first candidate
+    # plot[0]: First candidate
+    # plot[0][0]: time data of first candidate
+    # plot[0][1]: coefficient data of first candidate
+    # plot[0][2]: 'name' of first candidate
 
     # Get the candidate with the highest correlation coefficient
     sorted_candidates = sorted(plot, key=lambda tup: tup[3], reverse=True)
