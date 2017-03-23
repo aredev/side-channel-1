@@ -3,7 +3,7 @@ import numpy
 from scipy.stats.stats import pearsonr
 import matplotlib.pyplot as plt
 
-__author__ = "Tom Sandmann & Abdullah Rasool"
+__author__ = "Tom Sandmann (s4330048) & Abdullah Rasool (s4350693)"
 
 sbox = dict([
     (hex(0), hex(12)),
@@ -79,49 +79,38 @@ def create_power_prediction_matrix(value_prediction_matrix):
 def create_column_wise_correlation(traces, power_predication_matrix):
     candidates = []
 
-    for power_predication in range(columns):
-        correlations = []
-        for trace in range(6990):
-            correlation = abs(pearsonr(traces[:, trace], power_predication_matrix[:, power_predication])[0])    # The first number is the correlation, the second number is the p-value
-            correlations.append(correlation)
-        candidates.append((power_predication, correlations, max(correlations)))
-
-    candidates = sorted(candidates, key=lambda tup: tup[2], reverse=True)
-
-    print("Sorted candidates: ")
-    print("Candidate:\t\tCorrelation Value:")
-    for c in candidates:
-        print(str(c[0]), str(c[2]), sep="\t\t\t")
-
-    return candidates
-
-
-# Create a plot of the correlations
-def create_candidate_plot(traces, power_predication_matrix):
-    plot = []
-
     for candidate in range(columns):
         time_samples = []
         coefficients = []
         for time_sample in range(6990):
+            # pearsonnr() returns tuple, first element is correlation value, second is p-value.
             corcoef = abs(pearsonr(power_predication_matrix[:, candidate], traces[:, time_sample])[0])
             time_samples.append(time_sample)
             coefficients.append(corcoef)
+        candidates.append((time_samples, coefficients, candidate, max(coefficients)))
 
-        plot.append((time_samples, coefficients, candidate, max(coefficients)))
+    sorted_candidates = sorted(candidates, key=lambda tup: tup[3], reverse=True)
+    print("Sorted candidates: ")
+    print("Candidate:\t\tCorrelation Value:")
+    for c in sorted_candidates:
+        print(str(c[2]), str(c[3]), sep="\t\t\t")
 
-    # plot[0]: First candidate
-    # plot[0][0]: time data of first candidate
-    # plot[0][1]: coefficient data of first candidate
-    # plot[0][2]: 'name' of first candidate
+    return sorted_candidates
+
+
+# Create a plot of the correlations
+def create_candidate_plot(candidates):
+    # candidates[0]: First candidate
+    # candidates[0][0]: time data of first candidate
+    # candidates[0][1]: coefficient data of first candidate
+    # candidates[0][2]: 'name' of first candidate
 
     # Get the candidate with the highest correlation coefficient
-    sorted_candidates = sorted(plot, key=lambda tup: tup[3], reverse=True)
-    highest_correlated_candidate = sorted_candidates[0][2]
-    print('Candidate with highest correlation : ' + str(sorted_candidates[0][2]) + ' with correlation value ' +
-          str(sorted_candidates[0][3]))
+    highest_correlated_candidate = candidates[0][2]
+    print('Candidate with highest correlation : ' + str(candidates[0][2]) + ' with correlation value ' +
+          str(candidates[0][3]))
 
-    for p in plot:
+    for p in candidates:
         if p[2] != highest_correlated_candidate:
             plt.plot(p[0], p[1], 'r', label=p[2])
         else:
@@ -135,6 +124,9 @@ def create_candidate_plot(traces, power_predication_matrix):
     return highest_correlated_candidate
 
 
+# Calculate the correlation for a different amount (ie. rows) of traces with each of the columns of the
+# power prediction matrix. We need to plot the ranking of the highest correlated candidate from the previous
+# step
 def create_stepped_power_traces_graph(traces, power_prediction_matrix, highest_correlated_candidate):
     nr_of_traces = [500, 1000, 2000, 4000, 8000, 12000]
     ranking = []
@@ -163,6 +155,7 @@ def create_stepped_power_traces_graph(traces, power_prediction_matrix, highest_c
     plt.ylabel('Ranking of candidate')
     plt.show()
 
+
 in_values = read_inputs_file()
 keys = create_all_keys()
 vpm = create_value_prediction_matrix(in_values, keys)
@@ -170,5 +163,5 @@ ppm = create_power_prediction_matrix(vpm)
 traces = read_traces_file()
 # print(len(traces[0:500, 0])) # To get the first n from a column do this
 candidates = create_column_wise_correlation(traces, ppm)
-hcc = create_candidate_plot(traces, ppm)
+hcc = create_candidate_plot(candidates)
 create_stepped_power_traces_graph(traces, ppm, hcc)
